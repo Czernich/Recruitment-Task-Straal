@@ -1,10 +1,11 @@
+from unittest import result
 from fastapi import FastAPI, Response
 from starlette import status
 
 from models import *
 from datetime_val import *
 from currency_conv import *
-import string
+from results import *
 
 app = FastAPI()
 
@@ -24,26 +25,23 @@ def report_transaction(request_body: RequestBody, response: Response):
         if item_dict[key] != None:
             for dict in item_dict[key]:
                 payment_info = PaymentInfo()
-                curr_date = dict["created_at"]
-                curr_currency = dict["currency"]
-                curr_amount = dict["amount"]
 
-                if not check_date(curr_date):
+                if not check_date(dict["created_at"]):
                     response.status_code = status.HTTP_400_BAD_REQUEST
                     return response
                 else:
-                    curr_date = standarize_date(curr_date)
+                    curr_date = standarize_date(dict["created_at"])
                     payment_info.date = curr_date
                     payment_info.type = key
                     payment_info.description = dict["description"]
-                    payment_info.currency = curr_currency
-                    payment_info.amount = curr_amount
+                    payment_info.currency = dict["currency"]
+                    payment_info.amount = dict["amount"]
 
-                    if curr_currency != "PLN":
+                    if dict["currency"] != "PLN":
                         simple_date = curr_date[:10]
-                        amount_in_pln = convert_currency(int(curr_amount), curr_currency.strip(),simple_date)
+                        amount_in_pln = convert_currency(int(dict["amount"]), dict["currency"].strip(),simple_date)
                     else:
-                        amount_in_pln = curr_amount
+                        amount_in_pln = dict["amount"]
 
                     payment_info.amount_in_pln = amount_in_pln
 
@@ -74,28 +72,24 @@ def customer_report(request_body: RequestBodyExtended, response: Response):
         if item_dict[key] != None:
             for dict in item_dict[key]:
                 payment_info_extended = PaymentInfoExtended()
-                curr_customer_id = dict["customer_id"]
-                curr_date = dict["created_at"]
-                curr_currency = dict["currency"]
-                curr_amount = dict["amount"]
 
-                if not check_date(curr_date):
+                if not check_date(dict["created_at"]):
                     response.status_code = status.HTTP_400_BAD_REQUEST
                     return response
                 else:
-                    curr_date = standarize_date(curr_date)
-                    payment_info_extended.customer_id = curr_customer_id
+                    curr_date = standarize_date(dict["created_at"])
+                    payment_info_extended.customer_id = dict["customer_id"]
                     payment_info_extended.date = curr_date
                     payment_info_extended.type = key
                     payment_info_extended.description = dict["description"]
-                    payment_info_extended.currency = curr_currency
-                    payment_info_extended.amount = curr_amount
+                    payment_info_extended.currency = dict["currency"]
+                    payment_info_extended.amount = dict["amount"]
 
-                    if curr_currency != "PLN":
+                    if dict["currency"] != "PLN":
                         simple_date = curr_date[:10]
-                        amount_in_pln = convert_currency(int(curr_amount), curr_currency.strip(),simple_date)
+                        amount_in_pln = convert_currency(int(dict["amount"]), dict["currency"].strip(),simple_date)
                     else:
-                        amount_in_pln = curr_amount
+                        amount_in_pln = dict["amount"]
 
                     payment_info_extended.amount_in_pln = amount_in_pln
 
@@ -113,13 +107,13 @@ def customer_report(request_body: RequestBodyExtended, response: Response):
 
                     results_list.append(payment_info_extended)
 
+    if len(app.last_user_report) != 0:
+        results_list.extend(app.last_user_report)
+        app.last_user_report = []
     datetime_sort(results_list)
-    for i in range(len(results_list)):
-        if i < len(results_list)-1:
-            if results_list[i].customer_id != results_list[i+1].customer_id:
-                app.last_user_report.append(results_list[i])
-        else:
-            app.last_user_report.append(results_list[i])
+    
+    app.last_user_report = get_last_users_report(results_list, app)
+
     return app.last_user_report
 
 
@@ -138,7 +132,6 @@ def search_customer(customer_id, response: Response):
         if len(app.last_user_report) != 0:
             for i in range(len(app.last_user_report)):
                 if app.last_user_report[i].customer_id == customer_id:
-                    
                     results_list.append(app.last_user_report[i])
         else:
             response.status_code = status.HTTP_404_NOT_FOUND

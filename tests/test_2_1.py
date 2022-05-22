@@ -28,7 +28,7 @@ class RecruitmentAppSetupTest(unittest.TestCase):
                     "dp": [
                             {
                             "customer_id": 1,
-                            "created_at": "2021-05-14T08:27:09Z",
+                            "created_at": "2021-05-20T08:27:09Z",
                             "currency": "USD",
                             "amount": 599,
                             "description": "FastFood",
@@ -52,13 +52,13 @@ class RecruitmentAppSetupTest(unittest.TestCase):
                 [
                     {
                         "customer_id": 1,
-                        "date": "2021-05-14T08:27:09Z",
+                        "date": "2021-05-20T08:27:09Z",
                         "type": "dp",
                         "payment_mean": "DE91100000000123456789",
                         "description": "FastFood",
                         "currency": "USD",
                         "amount": 599,
-                        "amount_in_pln": 2238
+                        "amount_in_pln": 2220
                     },
                     {
                         "customer_id": 2,
